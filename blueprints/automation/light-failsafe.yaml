@@ -1,8 +1,8 @@
 blueprint:
   name: Sécurité extinction automatique lumière
   description: >
-    Éteint automatiquement une lumière après un délai défini en heures et envoie 
-    une notification si l'extinction est déclenchée par la sécurité.
+    Éteint automatiquement une lumière après un délai défini en heures. 
+    Si la lumière est éteinte manuellement avant la fin du délai, l'automatisation s'arrête.
   domain: automation
   input:
     target_light:
@@ -24,13 +24,6 @@ blueprint:
           step: 0.1
           unit_of_measurement: h
           mode: box
-    notify_device:
-      name: Appareil pour la notification
-      description: Appareil mobile qui recevra l'alerte de sécurité.
-      selector:
-        device:
-          filter:
-            - integration: mobile_app
 
 mode: restart
 
@@ -41,8 +34,6 @@ trigger:
     to: "on"
 
 action:
-  - variables:
-      light_entity: !input target_light
   - wait_for_trigger:
       - platform: state
         entity_id: !input target_light
@@ -58,8 +49,3 @@ action:
       - service: homeassistant.turn_off
         target:
           entity_id: !input target_light
-      - domain: mobile_app
-        type: notify
-        device_id: !input notify_device
-        title: "Sécurité lumière"
-        message: "La lumière {{ state_attr(light_entity, 'friendly_name') }} a été éteinte automatiquement."
