@@ -1,5 +1,5 @@
 blueprint:
-  name: Éclairage Intelligent
+  name: Éclairage intelligent
   description: >
     Allume une lumière lors d'une détection de mouvement, uniquement si un seuil 
     de luminosité est atteint (capteur binaire). Éteint la lumière dès que le 

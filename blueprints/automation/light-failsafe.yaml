@@ -1,5 +1,5 @@
 blueprint:
-  name: Sécurité Extinction Automatique
+  name: Extinction automatique lumière
   description: >
     Éteint automatiquement une lumière après qu'elle soit restée allumée pendant 
     une durée déterminée, peu importe la façon dont elle a été activée. 
@@ -16,7 +16,7 @@ blueprint:
             - light
             - switch
     off_delay:
-      name: Délai avant extinction (Heures)
+      name: Délai avant extinction (heures)
       description: Combien d'heures la lumière doit rester allumée avant d'être éteinte de force.
       default: 1
       selector:
