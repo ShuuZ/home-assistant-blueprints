@@ -41,6 +41,8 @@ trigger:
     to: "on"
 
 action:
+  - variables:
+      light_entity: !input target_light
   - wait_for_trigger:
       - platform: state
         entity_id: !input target_light
@@ -60,4 +62,4 @@ action:
         type: notify
         device_id: !input notify_device
         title: "Sécurité lumière"
-        message: "La lumière {{ state_attr(!input target_light, 'friendly_name') }} a été éteinte automatiquement."
+        message: "La lumière {{ state_attr(light_entity, 'friendly_name') }} a été éteinte automatiquement."
