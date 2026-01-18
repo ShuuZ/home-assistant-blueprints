@@ -1,0 +1,55 @@
+blueprint:
+  name: Éclairage Intelligent
+  description: >
+    Allume une lumière lors d'une détection de mouvement, uniquement si un seuil 
+    de luminosité est atteint (capteur binaire). Éteint la lumière dès que le 
+    mouvement s'arrête.
+  domain: automation
+  input:
+    motion_sensor:
+      name: Capteur de mouvement
+      description: Le capteur qui détecte la présence ou le mouvement.
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: occupancy
+    illuminance_sensor:
+      name: Seuil de luminosité
+      description: Capteur binaire qui est "on" lorsqu'il fait assez sombre.
+      selector:
+        entity:
+          domain: binary_sensor
+    target_light:
+      name: Lumière
+      description: La lumière à contrôler.
+      selector:
+        entity:
+          domain: light
+
+mode: single
+
+trigger:
+  - platform: state
+    entity_id: !input motion_sensor
+
+action:
+  - if:
+      - condition: state
+        entity_id: !input motion_sensor
+        state: "on"
+      - condition: state
+        entity_id: !input illuminance_sensor
+        state: "on"
+    then:
+      - action: light.turn_on
+        target:
+          entity_id: !input target_light
+    else:
+      - if:
+          - condition: state
+            entity_id: !input motion_sensor
+            state: "off"
+        then:
+          - action: light.turn_off
+            target:
+              entity_id: !input target_light
