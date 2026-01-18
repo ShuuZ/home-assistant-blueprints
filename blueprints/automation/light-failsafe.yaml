@@ -1,15 +1,13 @@
 blueprint:
-  name: Extinction automatique lumière
+  name: Sécurité extinction automatique lumière
   description: >
-    Éteint automatiquement une lumière après qu'elle soit restée allumée pendant 
-    une durée déterminée, peu importe la façon dont elle a été activée. 
-    Cela sert de "garde-fou" si un capteur de mouvement reste bloqué ou si 
-    une lumière est oubliée.
+    Éteint automatiquement une lumière après un délai défini en heures et envoie 
+    une notification si l'extinction est déclenchée par la sécurité.
   domain: automation
   input:
     target_light:
       name: Lumière cible
-      description: La lumière ou l'interrupteur que vous souhaitez surveiller.
+      description: La lumière ou l'interrupteur à surveiller.
       selector:
         entity:
           domain: 
@@ -17,14 +15,22 @@ blueprint:
             - switch
     off_delay:
       name: Délai avant extinction (heures)
-      description: Combien d'heures la lumière doit rester allumée avant d'être éteinte de force.
+      description: Délai avant l'extinction automatique.
       default: 1
       selector:
         number:
-          min: 1
+          min: 0.1
           max: 24
+          step: 0.1
           unit_of_measurement: h
           mode: box
+    notify_device:
+      name: Appareil pour la notification
+      description: Appareil mobile qui recevra l'alerte de sécurité.
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
 
 mode: restart
 
@@ -35,8 +41,23 @@ trigger:
     to: "on"
 
 action:
-  - delay:
+  - wait_for_trigger:
+      - platform: state
+        entity_id: !input target_light
+        to: "off"
+    timeout:
       hours: !input off_delay
-  - service: homeassistant.turn_off
-    target:
-      entity_id: !input target_light
+    continue_on_timeout: true
+  - if:
+      - condition: state
+        entity_id: !input target_light
+        state: "on"
+    then:
+      - service: homeassistant.turn_off
+        target:
+          entity_id: !input target_light
+      - domain: mobile_app
+        type: notify
+        device_id: !input notify_device
+        title: "Sécurité lumière"
+        message: "La lumière {{ state_attr(!input target_light, 'friendly_name') }} a été éteinte automatiquement."
