@@ -231,7 +231,7 @@ action:
               
           - action: input_number.set_value
             target:
-              entity_id: !input cycle_helper
+              entity_id: "{{ cycle_helper_var }}"
             data:
               value: "{{ next_val }}"
           
