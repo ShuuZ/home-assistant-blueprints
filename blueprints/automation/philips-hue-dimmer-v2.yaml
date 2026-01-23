@@ -1,0 +1,206 @@
+blueprint:
+  name: Philips Hue Dimmer v2 (MQTT)
+  description: >
+    Contrôle une lumière avec l'interrupteur Philips Hue Dimmer v2 (RWL022) via Zigbee2MQTT (Device Triggers).
+    Supporte le cycle de 3 scènes (optionnel) via le bouton Hue.
+    
+    Pré-requis :
+    - Un interrupteur RWL022 appairé via Zigbee2MQTT.
+    - (Optionnel) Un Helper "Input Select" pour le cycle de scènes (Option 1, Option 2, Option 3).
+      
+    Boutons :
+    - Power (Haut) : Toggle (Allumer/Éteindre)
+    - Plus (Haut-Milieu) : Augmenter la luminosité
+    - Moins (Bas-Milieu) : Diminuer la luminosité
+    - Hue (Bas) : Cycle entre Scène 1 -> Scène 2 -> Scène 3
+  domain: automation
+  input:
+    remote:
+      name: Interrupteur Hue Dimmer (Device)
+      description: Le périphérique (Device) Hue Dimmer Switch v2 sur MQTT.
+      selector:
+        device:
+          integration: mqtt
+          manufacturer: Signify Netherlands B.V.
+          model: RWL022
+          multiple: false
+    
+    light:
+      name: Lumière Cible
+      description: La lumière à contrôler.
+      selector:
+        target:
+          entity:
+            domain: light
+
+    cycle_helper:
+      name: Helper de Cycle (Input Select)
+      description: >
+        L'entité 'input_select' pour suivre le cycle des scènes.
+        (Optionnel) Si non défini, le bouton Hue ne fera rien.
+      default: {}
+      selector:
+        entity:
+          domain: input_select
+    
+    scene_1:
+      name: Scène 1
+      description: Première scène du cycle. (Optionnel)
+      default: {}
+      selector:
+        entity:
+          domain: scene
+    
+    scene_2:
+      name: Scène 2
+      description: Deuxième scène du cycle. (Optionnel)
+      default: {}
+      selector:
+        entity:
+          domain: scene
+    
+    scene_3:
+      name: Scène 3
+      description: Troisième scène du cycle. (Optionnel)
+      default: {}
+      selector:
+        entity:
+          domain: scene
+
+trigger:
+  - platform: device
+    domain: mqtt
+    device_id: !input remote
+    type: action
+    subtype: on_press
+    id: "power_press"
+    
+  - platform: device
+    domain: mqtt
+    device_id: !input remote
+    type: action
+    subtype: up_press
+    id: "dim_up_press"
+    
+  - platform: device
+    domain: mqtt
+    device_id: !input remote
+    type: action
+    subtype: up_hold
+    id: "dim_up_hold"
+    
+  - platform: device
+    domain: mqtt
+    device_id: !input remote
+    type: action
+    subtype: down_press
+    id: "dim_down_press"
+    
+  - platform: device
+    domain: mqtt
+    device_id: !input remote
+    type: action
+    subtype: down_hold
+    id: "dim_down_hold"
+    
+  - platform: device
+    domain: mqtt
+    device_id: !input remote
+    type: action
+    subtype: off_press
+    id: "hue_press"
+
+action:
+  - variables:
+      cycle_helper_var: !input cycle_helper
+      
+  - choose:
+      # Power Button: Toggle
+      - conditions:
+          - condition: trigger
+            id: "power_press"
+        sequence:
+          - action: light.toggle
+            target: !input light
+
+      # Dim Up (Single Press): +10%
+      - conditions:
+          - condition: trigger
+            id: "dim_up_press"
+        sequence:
+          - action: light.turn_on
+            target: !input light
+            data:
+              brightness_step_pct: 10
+      
+      # Dim Up (Hold): +20%
+      - conditions:
+          - condition: trigger
+            id: "dim_up_hold"
+        sequence:
+          - action: light.turn_on
+            target: !input light
+            data:
+              brightness_step_pct: 20
+
+      # Dim Down (Single Press): -10%
+      - conditions:
+          - condition: trigger
+            id: "dim_down_press"
+        sequence:
+          - action: light.turn_on
+            target: !input light
+            data:
+              brightness_step_pct: -10
+
+      # Dim Down (Hold): -20%
+      - conditions:
+          - condition: trigger
+            id: "dim_down_hold"
+        sequence:
+          - action: light.turn_on
+            target: !input light
+            data:
+              brightness_step_pct: -20
+
+      # Hue Button: Cycle Scenes (Only if helper is defined)
+      - conditions: 
+          - condition: trigger
+            id: "hue_press"
+          - condition: template
+            value_template: "{{ cycle_helper_var != none }}"
+        sequence:
+          - action: input_select.select_next
+            target:
+              entity_id: !input cycle_helper
+          
+          - choose:
+              - conditions:
+                  - condition: state
+                    entity_id: !input cycle_helper
+                    state: "Option 1"
+                sequence:
+                  - action: scene.turn_on
+                    target:
+                      entity_id: !input scene_1
+              
+              - conditions:
+                  - condition: state
+                    entity_id: !input cycle_helper
+                    state: "Option 2"
+                sequence:
+                  - action: scene.turn_on
+                    target:
+                      entity_id: !input scene_2
+
+              - conditions:
+                  - condition: state
+                    entity_id: !input cycle_helper
+                    state: "Option 3"
+                sequence:
+                  - action: scene.turn_on
+                    target:
+                      entity_id: !input scene_3
+
+mode: restart
+max_exceeded: silent

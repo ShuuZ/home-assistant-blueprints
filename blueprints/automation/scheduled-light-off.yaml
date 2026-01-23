@@ -1,0 +1,27 @@
+blueprint:
+  name: Éteindre une lumière à une heure donnée
+  description: Automatisation pour éteindre une lumière spécifique à une heure définie.
+  domain: automation
+  input:
+    trigger_time:
+      name: Heure
+      description: L'heure à laquelle la lumière doit s'éteindre.
+      selector:
+        time: {}
+    target_light:
+      name: Lumière
+      description: La lumière à éteindre.
+      selector:
+        entity:
+          domain: light
+
+trigger:
+  - trigger: time
+    at: !input trigger_time
+
+action:
+  - action: light.turn_off
+    target:
+      entity_id: !input target_light
+
+mode: single
