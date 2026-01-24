@@ -181,6 +181,16 @@ action:
         sequence:
           - action: light.toggle
             target: !input light
+          
+          - if:
+              - condition: template
+                value_template: "{{ cycle_helper_var != none and cycle_helper_var != {} and cycle_helper_var != '' and scene_count > 0 }}"
+            then:
+              - action: input_number.set_value
+                target:
+                  entity_id: "{{ cycle_helper_var }}"
+                data:
+                  value: "{{ scene_count }}"
 
       # Dim Up (Single Press): +10%
       - conditions:
@@ -191,6 +201,16 @@ action:
             target: !input light
             data:
               brightness_step_pct: 10
+
+          - if:
+              - condition: template
+                value_template: "{{ cycle_helper_var != none and cycle_helper_var != {} and cycle_helper_var != '' and scene_count > 0 }}"
+            then:
+              - action: input_number.set_value
+                target:
+                  entity_id: "{{ cycle_helper_var }}"
+                data:
+                  value: "{{ scene_count }}"
       
       # Dim Up (Hold): +20%
       - conditions:
@@ -202,6 +222,16 @@ action:
             data:
               brightness_step_pct: 20
 
+          - if:
+              - condition: template
+                value_template: "{{ cycle_helper_var != none and cycle_helper_var != {} and cycle_helper_var != '' and scene_count > 0 }}"
+            then:
+              - action: input_number.set_value
+                target:
+                  entity_id: "{{ cycle_helper_var }}"
+                data:
+                  value: "{{ scene_count }}"
+
       # Dim Down (Single Press): -10%
       - conditions:
           - condition: trigger
@@ -212,6 +242,16 @@ action:
             data:
               brightness_step_pct: -10
 
+          - if:
+              - condition: template
+                value_template: "{{ cycle_helper_var != none and cycle_helper_var != {} and cycle_helper_var != '' and scene_count > 0 }}"
+            then:
+              - action: input_number.set_value
+                target:
+                  entity_id: "{{ cycle_helper_var }}"
+                data:
+                  value: "{{ scene_count }}"
+
       # Dim Down (Hold): -20%
       - conditions:
           - condition: trigger
@@ -221,6 +261,16 @@ action:
             target: !input light
             data:
               brightness_step_pct: -20
+
+          - if:
+              - condition: template
+                value_template: "{{ cycle_helper_var != none and cycle_helper_var != {} and cycle_helper_var != '' and scene_count > 0 }}"
+            then:
+              - action: input_number.set_value
+                target:
+                  entity_id: "{{ cycle_helper_var }}"
+                data:
+                  value: "{{ scene_count }}"
 
       # Hue Button: Cycle Scenes (Dynamic)
       - conditions: 
