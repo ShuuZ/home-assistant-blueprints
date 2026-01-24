@@ -84,6 +84,18 @@ blueprint:
         entity:
           domain: scene
 
+    reset_delay:
+      name: Délai de réinitialisation
+      description: >
+        Délai (en secondes) après lequel le cycle se réinitialise à la première scène.
+      default: 15
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+          mode: box
+
 trigger:
   - platform: device
     domain: mqtt
@@ -130,6 +142,7 @@ trigger:
 action:
   - variables:
       cycle_helper_var: !input cycle_helper
+      reset_delay_var: !input reset_delay
       # Create a list of scenes, filtering out empty ones
       scenes: >
         {% set result = [] %}
@@ -220,15 +233,28 @@ action:
         sequence:
           - variables:
               current_val: "{{ states(cycle_helper_var) | int(default=0) }}"
-              # scene_count is already integer from length filter
-              # Logic: next = current + 1. If next > count, next = 1.
+              # Logic: Check for timeout based on last_updated
               next_val: >
-                {% set val = current_val + 1 %}
-                {% if val > scene_count %}
-                  {% set val = 1 %}
+                {% set entity = states[cycle_helper_var] %}
+                {% set last_updated = entity.last_updated if entity else none %}
+                {% if last_updated and (as_timestamp(now()) - as_timestamp(last_updated)) > (reset_delay_var | float(0)) %}
+                  1
+                {% else %}
+                  {% set val = current_val + 1 %}
+                  {{ 1 if val > scene_count else val }}
                 {% endif %}
-                {{ val }}
-              
+              force_refresh: "{{ current_val == next_val and scene_count > 1 }}"
+
+          - if:
+              - condition: template
+                value_template: "{{ force_refresh }}"
+            then:
+              - action: input_number.set_value
+                target:
+                  entity_id: "{{ cycle_helper_var }}"
+                data:
+                  value: 2
+
           - action: input_number.set_value
             target:
               entity_id: "{{ cycle_helper_var }}"
